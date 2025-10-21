@@ -38,7 +38,7 @@ import studentRoutes from './src/routes/studentRoutes.js';
 import adminRoutes from './src/routes/adminRoutes.js';
 import hostelRoutes from './src/routes/hostelRoutes.js';
 
-// ✅ NEW: Only load dotenv when NOT in production (i.e., on your laptop)
+// Load dotenv only when NOT in production
 if (process.env.NODE_ENV !== 'production') {
   const dotenv = await import('dotenv');
   dotenv.config();
@@ -46,9 +46,30 @@ if (process.env.NODE_ENV !== 'production') {
 
 const app = express();
 
-// ... (rest of your server.js code remains the same)
-// ... middleware, routes, app.listen, etc.
-app.use(cors());
+// ✅ --- CORS CONFIGURATION UPDATED ---
+// Define the list of allowed frontend URLs
+const allowedOrigins = [
+  'http://localhost:5173', // Your local frontend
+  'https://myhosty.netlify.app' // Your live Netlify frontend
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  }
+};
+
+// Use the new CORS options
+app.use(cors(corsOptions));
+// --- END OF CORS UPDATE ---
+
+
 app.use(express.json());
 
 connectDB();
