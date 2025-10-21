@@ -46,37 +46,35 @@ if (process.env.NODE_ENV !== 'production') {
 
 const app = express();
 
-// ✅ --- CORS CONFIGURATION UPDATED ---
-// Define the list of allowed frontend URLs
-const allowedOrigins = [
-  'http://localhost:5173', // Your local frontend
-  'https://myhosty.netlify.app' // Your live Netlify frontend
-];
-
+// CORS Configuration
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  }
+    origin: [
+        "http://localhost:5173",
+        "https://myhosty.netlify.app"
+    ],
+    methods: "GET,POST,PUT,DELETE,PATCH,HEAD",
+    credentials: true
 };
-
-// Use the new CORS options
 app.use(cors(corsOptions));
-// --- END OF CORS UPDATE ---
-
-
 app.use(express.json());
 
 connectDB();
 
+// --- API Routes ---
 app.use('/api/student', studentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/hostel', hostelRoutes);
+
+// ✅ --- NEW: Health Check Route ---
+// This is a simple test route to check if the server is alive and reachable.
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+      status: 'success',
+      message: 'Hostel Backend API is running and healthy!' 
+  });
+});
+// --- END OF NEW ROUTE ---
+
 
 const PORT = process.env.PORT || 5000;
 
