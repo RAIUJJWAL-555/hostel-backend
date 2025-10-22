@@ -32,39 +32,44 @@
 
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
 import connectDB from "./src/config/db.js";
 
 import studentRoutes from "./src/routes/studentRoutes.js";
 import adminRoutes from "./src/routes/adminRoutes.js";
 import hostelRoutes from "./src/routes/hostelRoutes.js";
 
+// Load environment variables only in development
 if (process.env.NODE_ENV !== "production") {
-  const dotenv = await import("dotenv");
   dotenv.config();
 }
 
 const app = express();
 
+// CORS configuration for allowed origins
 const corsOptions = {
   origin: [
-    "http://localhost:5173",
-    "https://myhosty.netlify.app",
+    "http://localhost:5173",       // Your local frontend
+    "https://myhosty.netlify.app",   // Your deployed frontend
   ],
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
+// --- Middleware ---
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // 👈 Add this line
 app.use(express.json());
 
+// --- Database Connection ---
 connectDB();
 
+// --- API Routes ---
 app.use("/api/student", studentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/hostel", hostelRoutes);
 
+// --- Health Check Route ---
+// A simple route to check if the server is running
 app.get("/", (req, res) => {
   res.status(200).json({
     status: "success",
@@ -72,7 +77,8 @@ app.get("/", (req, res) => {
   });
 });
 
+// --- Server Startup ---
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
