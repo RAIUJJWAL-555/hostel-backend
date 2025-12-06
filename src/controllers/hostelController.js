@@ -192,7 +192,8 @@ export const deleteRoom = async (req, res) => {
 
 export const getFeeData = async (req, res) => {
     try {
-        const feeData = await Student.find({}, 'name applicationNumber roomAllotted feeStatus feeAmountDue feeDueDate');
+        // Updated projection to include monthsDue and messFeePerMonth
+        const feeData = await Student.find({}, 'name applicationNumber roomAllotted feeStatus feeAmountDue feeDueDate monthsDue messFeePerMonth');
         res.status(200).json(feeData);
     } catch (err) {
         console.error('Error fetching fee data:', err);
@@ -214,9 +215,16 @@ export const updateFeeDetails = async (req, res) => {
         
         if (updates.monthsDue !== undefined) {
             const newMonthsDue = parseInt(updates.monthsDue);
-            feeAmountToSet = newMonthsDue * student.messFeePerMonth; 
+            const feePerMonth = student.messFeePerMonth || 3500; // Fallback to default if undefined
+            feeAmountToSet = newMonthsDue * feePerMonth; 
             updates.feeAmountDue = feeAmountToSet;
         } 
+        
+        // --- NEW LOGIC: If marking as Paid, clear the dues ---
+        if (updates.feeStatus === 'Paid') {
+            updates.feeAmountDue = 0;
+            updates.monthsDue = 0;
+        }
         
         const updatedStudent = await Student.findOneAndUpdate(
             { applicationNumber: applicationNumber },
