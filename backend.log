@@ -1,0 +1,7 @@
+
+> hostel-backend@1.0.0 start
+> node server.js
+
+SENDGRID_API_KEY is not set or invalid. Email sending will not work.
+🚀 Server running on port 5000
+✅ MongoDB Connected
