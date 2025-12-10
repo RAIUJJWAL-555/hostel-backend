@@ -5,14 +5,14 @@ import bcrypt from 'bcryptjs';
 // --- Student Registration ---
 export const registerStudent = async (req, res) => {
   try {
-    const { name, applicationNumber, email, dob, year, branch, distance, rank, counselingRound, password } = req.body;
+    const { name, applicationNumber, email, dob, year, branch, distance, rank, counselingRound, gender, password } = req.body;
     const existing = await Student.findOne({ applicationNumber });
     if (existing) {
       return res.status(400).json({ message: 'Application number already exists!' });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const newStudent = new Student({
-      name, applicationNumber, email, dob, year, branch, distance, rank, counselingRound, password: hashedPassword,
+      name, applicationNumber, email, dob, year, branch, distance, rank, counselingRound, gender, password: hashedPassword,
     });
     await newStudent.save();
     res.status(201).json({ message: 'Student registered successfully!' });

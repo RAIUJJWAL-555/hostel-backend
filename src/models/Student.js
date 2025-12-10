@@ -10,6 +10,7 @@ const studentSchema = new mongoose.Schema({
   distance: { type: Number, required: true },
   rank: { type: Number, required: true },
   counselingRound: { type: String, required: true },
+  gender: { type: String, enum: ['Male', 'Female', 'Other'], required: true }, 
   password: { type: String, required: true },
   status: { type: String, required: true, default: 'pending' },
   roomAllotted: { type: String, default: null },
