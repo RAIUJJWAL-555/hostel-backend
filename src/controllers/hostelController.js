@@ -124,12 +124,14 @@ export const allotRoom = async (req, res) => {
 
 export const addRoom = async (req, res) => {
     try {
-        const { roomNumber, capacity, type, status } = req.body;
-        const existingRoom = await Room.findOne({ roomNumber });
+        const { roomNumber, capacity, type, status, hostelType } = req.body;
+        
+        // Check if room with same number AND same hostel type exists
+        const existingRoom = await Room.findOne({ roomNumber, hostelType });
         if (existingRoom) {
-            return res.status(400).json({ message: 'Room number already exists.' });
+            return res.status(400).json({ message: `Room ${roomNumber} already exists in ${hostelType} Hostel.` });
         }
-        const newRoom = new Room({ roomNumber, capacity, type, status, occupancyCount: 0 });
+        const newRoom = new Room({ roomNumber, capacity, type, status, hostelType, occupancyCount: 0 });
         await newRoom.save();
         res.status(201).json({ message: 'Room added successfully!', room: newRoom });
     } catch (err) {
@@ -243,6 +245,73 @@ export const updateFeeDetails = async (req, res) => {
     }
 };
 
+
+// --- Student Management (Edit/Delete) ---
+
+export const updateStudent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+        
+        // Prevent updating immutable fields if necessary, currently allowing all non-id fields
+        delete updates._id;
+
+        const updatedStudent = await Student.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
+        
+        if (!updatedStudent) {
+            return res.status(404).json({ message: 'Student not found!' });
+        }
+
+        res.status(200).json({ message: 'Student details updated successfully!', student: updatedStudent });
+
+    } catch (err) {
+        console.error('Error updating student:', err);
+        res.status(500).json({ message: 'Failed to update student.', error: err.message });
+    }
+};
+
+export const deleteStudent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const student = await Student.findById(id);
+
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found!' });
+        }
+
+        // If student has a room, vacate it
+        if (student.roomAllotted) {
+            // Find the room
+             const room = await Room.findOne({ roomNumber: student.roomAllotted });
+             if (room) {
+                 // Decrement occupancy
+                 const newOccupancy = Math.max(0, room.occupancyCount - 1);
+                 let newStatus = room.status;
+                 if (newStatus === 'Full' && newOccupancy < room.capacity) {
+                     newStatus = 'Available';
+                 } else if(newStatus === 'Maintenance') {
+                     // Keep maintenance
+                 } else {
+                    // Default to available if not full/maintenance
+                    newStatus = 'Available'; 
+                 }
+
+                 await Room.updateOne(
+                     { roomNumber: student.roomAllotted },
+                     { $set: { occupancyCount: newOccupancy, status: newStatus } }
+                 );
+             }
+        }
+
+        await Student.findByIdAndDelete(id);
+
+        res.status(200).json({ message: 'Student deleted successfully!' });
+
+    } catch (err) {
+        console.error('Error deleting student:', err);
+        res.status(500).json({ message: 'Failed to delete student.', error: err.message });
+    }
+};
 
 // --- Complaint Management (Admin) ---
 

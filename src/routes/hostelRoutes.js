@@ -3,6 +3,7 @@ import {
     getAllApplications, updateApplicationStatus, allotRoom,
     addRoom, getAllRooms, updateRoom, deleteRoom,
     getFeeData, updateFeeDetails,
+    updateStudent, deleteStudent,
     getAllComplaints, updateComplaintStatus
 } from '../controllers/hostelController.js';
 
@@ -13,6 +14,8 @@ router.get('/applications', getAllApplications);
 router.get('/applications-student', getAllApplications); // Duplicate route as per your original file
 router.patch('/applications/:applicationNumber', updateApplicationStatus);
 router.patch('/applications/:applicationNumber/allot-room', allotRoom);
+router.patch('/students/:id', updateStudent);
+router.delete('/students/:id', deleteStudent);
 
 // --- Room Inventory ---
 router.post('/rooms', addRoom);
