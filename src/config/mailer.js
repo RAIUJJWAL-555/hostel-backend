@@ -9,12 +9,9 @@ if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.startsWith('SG.
   console.warn('SENDGRID_API_KEY is not set or invalid. Email sending will not work.');
 }
 
-// यह भी अब Environment Variable से आएगा। यह आपका SendGrid वेरिफाइड ईमेल होना चाहिए।
+
 const EMAIL_FROM = process.env.EMAIL_FROM;
 
-/**
- * Helper function to send the OTP via email
- */
 export const sendOTP = async (email, otp, purpose) => {
     if (!EMAIL_FROM) {
         console.error('EMAIL_FROM is not set in environment variables. Please verify your sender identity in SendGrid and set it.');

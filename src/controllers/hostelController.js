@@ -45,8 +45,11 @@ export const updateApplicationStatus = async (req, res) => {
         );
 
         if (roomToVacate) {
+            let targetHostelType = 'Boys';
+            if (studentToUpdate.gender === 'Female') targetHostelType = 'Girls';
+
             await Room.updateOne(
-                { roomNumber: roomToVacate, occupancyCount: { $gt: 0 } },
+                { roomNumber: roomToVacate, hostelType: targetHostelType, occupancyCount: { $gt: 0 } },
                 { $inc: { occupancyCount: -1 }, $set: { status: 'Available' } }
             );
         }
@@ -79,9 +82,13 @@ export const allotRoom = async (req, res) => {
             return res.status(400).json({ message: message });
         }
         
-        const room = await Room.findOne({ roomNumber });
+        let targetHostelType = 'Boys';
+        if (student.gender === 'Female') targetHostelType = 'Girls';
+        // You might want to handle 'Other' case or default, assuming Boys for now or error out
+
+        const room = await Room.findOne({ roomNumber, hostelType: targetHostelType });
         if (!room || room.status === 'Maintenance') {
-            return res.status(400).json({ message: 'The selected room is unavailable or does not exist.' });
+            return res.status(400).json({ message: `Room ${roomNumber} in ${targetHostelType} Hostel is unavailable or does not exist.` });
         }
         
         if (room.occupancyCount >= room.capacity) {
@@ -104,7 +111,7 @@ export const allotRoom = async (req, res) => {
         }
         
         await Room.updateOne(
-            { roomNumber: roomNumber },
+            { _id: room._id },
             { $inc: { occupancyCount: 1 }, $set: { status: newRoomStatus } }
         );
 
@@ -281,8 +288,11 @@ export const deleteStudent = async (req, res) => {
 
         // If student has a room, vacate it
         if (student.roomAllotted) {
-            // Find the room
-             const room = await Room.findOne({ roomNumber: student.roomAllotted });
+            // Find the room - Resolve ambiguity using gender
+             let targetHostelType = 'Boys';
+             if (student.gender === 'Female') targetHostelType = 'Girls';
+
+             const room = await Room.findOne({ roomNumber: student.roomAllotted, hostelType: targetHostelType });
              if (room) {
                  // Decrement occupancy
                  const newOccupancy = Math.max(0, room.occupancyCount - 1);
@@ -297,7 +307,7 @@ export const deleteStudent = async (req, res) => {
                  }
 
                  await Room.updateOne(
-                     { roomNumber: student.roomAllotted },
+                     { _id: room._id },
                      { $set: { occupancyCount: newOccupancy, status: newStatus } }
                  );
              }
