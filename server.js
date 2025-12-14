@@ -31,7 +31,25 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // --- Database Connection ---
-connectDB();
+connectDB().then(async () => {
+  try {
+    const Room = (await import('./src/models/Room.js')).default;
+    const collection = Room.collection;
+    const indexes = await collection.indexes();
+    const indexName = "roomNumber_1"; 
+    
+    // Check and drop the old unique index if it exists logic
+    const indexExists = indexes.some(idx => idx.name === indexName);
+    if (indexExists) {
+        await collection.dropIndex(indexName);
+        console.log(`✅ Startup: Index '${indexName}' dropped successfully!`);
+    } else {
+        console.log(`ℹ️ Startup: DB Check - Index '${indexName}' is clean.`);
+    }
+  } catch (err) {
+    console.error("⚠️ Startup DB Index Check Error (Non-fatal):", err.message);
+  }
+});
 
 // --- API Routes ---
 app.use("/api/student", studentRoutes);
