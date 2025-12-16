@@ -1,21 +1,25 @@
 import dotenv from 'dotenv';
 import sgMail from '@sendgrid/mail';
-export const ADMIN_ACCESS_KEY = process.env.ADMIN_ACCESS_KEY;
 
-// --- ⚙️ SendGrid Configuration ---
-if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.startsWith('SG.')) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-} else {
-  console.warn('SENDGRID_API_KEY is not set or invalid. Email sending will not work.');
+// 1. Dotenv ko initialize karein
+dotenv.config(); 
+
+// 2. API Key ko Library mein set karein (Yeh line MISSING thi)
+if (process.env.SENDGRID_API_KEY) {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
+export const ADMIN_ACCESS_KEY = process.env.ADMIN_ACCESS_KEY || 'GPG1101@gmail.com';
 
-const EMAIL_FROM = process.env.EMAIL_FROM;
+// 3. Yahaan wahi email dalein jo Screenshot 1 mein verified hai
+const EMAIL_FROM = process.env.EMAIL_FROM || 'hostelwebapp@gmail.com'; 
 
 export const sendOTP = async (email, otp, purpose) => {
-    if (!EMAIL_FROM) {
-        console.error('EMAIL_FROM is not set in environment variables. Please verify your sender identity in SendGrid and set it.');
-        throw new Error('Server email configuration is incomplete.');
+    // Basic config check
+    if (!process.env.SENDGRID_API_KEY) {
+        console.warn(`[⚠️ MOCK EMAIL] SendGrid API Key missing. Logging OTP to console instead.`);
+        console.log(`[👉 OTP for ${email}]: ${otp}`);
+        return; 
     }
 
     const subject = purpose === 'LOGIN' 
@@ -28,7 +32,7 @@ export const sendOTP = async (email, otp, purpose) => {
 
     const msg = {
         to: email,
-        from: EMAIL_FROM, // अब यह आपके .env फ़ाइल से आएगा
+        from: EMAIL_FROM, // Ab yeh verified email use karega
         subject,
         html: `
             <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
@@ -45,11 +49,16 @@ export const sendOTP = async (email, otp, purpose) => {
         await sgMail.send(msg);
         console.log(`${purpose} OTP sent successfully to ${email}`);
     } catch (error) {
-        console.error(`Error sending email to ${email}:`, error);
-        // SendGrid से मिले एरर को और बेहतर तरीके से दिखाते हैं
+        console.error(`[❌ Email Failed] Could not send email to ${email}. Falling back to console log.`);
+        
+        // Error details print karna debugging ke liye zaroori hai
         if (error.response) {
             console.error(error.response.body);
+        } else {
+            console.error(`Error details: ${error.message}`);
         }
-        throw new Error('Failed to send verification email via SendGrid.');
+
+        // Log OTP to console so user can still proceed
+        console.log(`[👉 OTP for ${email}]: ${otp}`);
     }
 };

@@ -1,6 +1,7 @@
+import "./src/config/env.js"; // Must be first!
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+// import dotenv from "dotenv"; // Removed as it's handled in env.js
 import connectDB from "./src/config/db.js";
 
 import studentRoutes from "./src/routes/studentRoutes.js";
@@ -8,10 +9,7 @@ import adminRoutes from "./src/routes/adminRoutes.js";
 import hostelRoutes from "./src/routes/hostelRoutes.js";
 import noticeRoutes from "./src/routes/noticeRoutes.js";
 
-// Load environment variables only in development
-if (process.env.NODE_ENV !== "production") {
-  dotenv.config();
-}
+// Environment variables are now loaded via "./src/config/env.js" at the top
 
 const app = express();
 
@@ -20,7 +18,8 @@ const corsOptions = {
   origin: [
     "http://localhost:5174",
     "http://localhost:5173",
-    "https://myhosty.netlify.app",   // Your deployed frontend
+    "https://myhosty.netlify.app",   // Previous deployment
+    "https://myhosty.vercel.app",    // New Vercel deployment
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   credentials: true,
